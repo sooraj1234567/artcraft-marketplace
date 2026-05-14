@@ -1,0 +1,193 @@
+<?php
+session_start();
+include("config/db.php");
+
+if(!isset($_SESSION['user_id'])){
+
+    header("Location: login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+$message = "";
+
+/* CATEGORY */
+
+$category_query = "SELECT * FROM categories";
+$category_result = mysqli_query($conn, $category_query);
+
+/* ADD PRODUCT */
+
+if(isset($_POST['add_product'])){
+
+    $category_id = $_POST['category_id'];
+
+    $product_name = mysqli_real_escape_string(
+        $conn,
+        $_POST['product_name']
+    );
+
+    $description = mysqli_real_escape_string(
+        $conn,
+        $_POST['description']
+    );
+
+    $price = $_POST['price'];
+
+    $stock = $_POST['stock'];
+
+    /* IMAGE */
+
+    $image_name = $_FILES['product_image']['name'];
+
+    $tmp_name = $_FILES['product_image']['tmp_name'];
+
+    move_uploaded_file(
+        $tmp_name,
+        "uploads/products/" . $image_name
+    );
+
+    /* INSERT */
+
+    $query = "INSERT INTO products
+
+    (user_id, category_id, product_name,
+    description, price, stock, product_image, status)
+
+    VALUES
+
+    ('$user_id', '$category_id', '$product_name',
+    '$description', '$price', '$stock',
+    '$image_name', 'approved')";
+
+    if(mysqli_query($conn, $query)){
+
+        $message = "Product Added Successfully";
+
+    } else {
+
+        $message = "Failed To Add Product";
+
+    }
+}
+
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Product</title>
+
+    <style>
+
+        body{
+            background:#f4f4f4;
+            font-family:Arial;
+        }
+
+        .container{
+            width:600px;
+            background:white;
+            padding:30px;
+            margin:40px auto;
+            border-radius:10px;
+        }
+
+        input, textarea, select{
+            width:100%;
+            padding:12px;
+            margin-top:12px;
+        }
+
+        button{
+            width:100%;
+            padding:14px;
+            margin-top:20px;
+            background:#1e1e2f;
+            color:white;
+            border:none;
+            cursor:pointer;
+        }
+
+        .message{
+            text-align:center;
+            color:green;
+            margin-bottom:15px;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <h2>Add Product</h2>
+
+    <?php if($message != ""){ ?>
+
+        <p class="message">
+            <?php echo $message; ?>
+        </p>
+
+    <?php } ?>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <select name="category_id" required>
+
+            <option value="">
+                Select Category
+            </option>
+
+            <?php while($cat = mysqli_fetch_assoc($category_result)){ ?>
+
+                <option value="<?php echo $cat['id']; ?>">
+
+                    <?php echo $cat['category_name']; ?>
+
+                </option>
+
+            <?php } ?>
+
+        </select>
+
+        <input type="text"
+               name="product_name"
+               placeholder="Product Name"
+               required>
+
+        <textarea
+            name="description"
+            placeholder="Product Description"
+            required></textarea>
+
+        <input type="number"
+               step="0.01"
+               name="price"
+               placeholder="Price"
+               required>
+
+        <input type="number"
+               name="stock"
+               placeholder="Stock"
+               required>
+
+        <input type="file"
+               name="product_image"
+               required>
+
+        <button type="submit"
+                name="add_product">
+
+            Add Product
+
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>
